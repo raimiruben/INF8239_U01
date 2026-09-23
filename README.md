@@ -75,3 +75,26 @@ git log --oneline
 - El kernel de Jupyter seleccionado en los notebooks corresponde al
   entorno virtual `.venv` (Python 3.13.7).
   
+
+  ## LAB02 — Dataset propio: enfermedad hepática (ILPD)
+
+### Instalación y descarga
+El dataset se descarga automáticamente ejecutando la celda correspondiente
+del notebook `01_svm_guiada.ipynb`, que llama a
+`inf8239_u01.data.download_csv()`. No requiere Google Drive ni rutas
+personales — el archivo se guarda en `data/raw/dataset.csv`.
+
+### Target
+`Selector` — clasificación binaria (1 = enfermedad hepática, 2 = sin
+enfermedad).
+
+### Métrica
+F1-macro, por el desbalance de clases (71% / 29%).
+
+### Ejecución
+
+.venv\Scripts\Activate.ps1
+$env:PYTHONPATH="src"
+python -m pytest -q
+Luego abrir `notebooks/01_svm_guiada.ipynb` y ejecutar todas las celdas
+en orden.
