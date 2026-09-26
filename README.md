@@ -146,3 +146,58 @@ En conjunto, LAB01 y LAB02 documentan un flujo completo y honesto de trabajo
 con datos reales: desde la formulación del problema hasta el hallazgo de
 limitaciones del modelo, pasando por errores de reproducibilidad
 identificados y corregidos de forma transparente.
+
+
+## Conclusión — Ejercicio 01
+
+Este ejercicio permitió adaptar el pipeline de clasificación construido en
+LAB01 a un dataset propio y real: el Indian Liver Patient Dataset (ILPD) del
+repositorio UCI, con el objetivo de apoyar la identificación de pacientes con
+probable enfermedad hepática a partir de marcadores bioquímicos de sangre.
+
+El proceso comenzó por formular el problema antes de buscar datos: se definió
+el dominio, la unidad de análisis, la decisión que el modelo apoyaría y el
+error más costoso (un falso negativo, es decir, no detectar a un paciente
+enfermo). Se compararon dos candidatos —el ILPD y el dataset Pima de
+diabetes— y se eligió el ILPD por incluir una variable categórica (Género)
+que permitía ejercitar el preprocesamiento completo con `ColumnTransformer`,
+algo que un dataset puramente numérico no habría permitido.
+
+La descarga se implementó de forma reproducible mediante la función
+`download_csv()`, sin depender de rutas personales ni de Google Drive. Sin
+embargo, surgió un problema recurrente ya observado en LAB01: al ejecutar la
+descarga desde el notebook, el directorio de trabajo correspondía a
+`notebooks/` y no a la raíz del proyecto, por lo que el archivo se guardó
+inicialmente en una ubicación incorrecta. Se corrigió usando `Path.cwd()`
+para construir una ruta absoluta hacia la raíz, la misma estrategia aplicada
+previamente para los resultados de LAB01 — confirmando que este es un patrón
+de error a tener en cuenta al trabajar con Jupyter.
+
+La auditoría del dataset reveló hallazgos reales: 4 valores ausentes en la
+variable `AG_Ratio` (0.69%) y 13 filas duplicadas. Se decidió conservar los
+duplicados, documentando la limitación de no contar con un identificador de
+paciente que permitiera confirmar si se trataba de registros repetidos o de
+coincidencias plausibles entre pacientes distintos.
+
+El hallazgo más relevante ocurrió al comparar el baseline con la SVM: con
+hiperparámetros por defecto, la SVM (F1-macro 0.406) tuvo un desempeño
+prácticamente idéntico al `DummyClassifier` (F1-macro 0.415), colapsando a
+predecir casi siempre la clase mayoritaria (recall de 0% en la clase
+minoritaria). Esto evidenció el efecto del desbalance de clases (71%/29%)
+sobre un modelo sin ajustar. Al introducir `class_weight="balanced"`, el
+F1-macro subió a 0.619 y el recall de la clase minoritaria pasó de 0% a 88%,
+aunque a costa de reducir el recall de la clase mayoritaria (de 96% a 52%).
+
+Para explorar si este balance podía mejorarse, se hizo una búsqueda de
+hiperparámetros con `GridSearchCV` (`C` y `gamma`) sobre `StratifiedKFold` de
+5 particiones, con `class_weight="balanced"` fijo. Los mejores parámetros
+(`C=10`, `gamma="scale"`) elevaron el F1-macro en test a 0.6429, con recall
+aún mayor en la clase minoritaria (88.24%) y leve mejora en la mayoritaria
+(55.42%). El ajuste confirmó que persiste una tensión real entre el balance
+estadístico y el error clínicamente más costoso definido en la ficha del
+dataset, que merece seguir explorándose en laboratorios posteriores.
+
+En conjunto, LAB01, LAB02 y este ejercicio documentan un flujo completo y
+honesto de trabajo con datos reales: desde la formulación del problema hasta
+el hallazgo de limitaciones del modelo, pasando por errores de
+reproducibilidad identificados y corregidos de forma transparente.
