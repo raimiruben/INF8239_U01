@@ -201,3 +201,56 @@ En conjunto, LAB01, LAB02 y este ejercicio documentan un flujo completo y
 honesto de trabajo con datos reales: desde la formulación del problema hasta
 el hallazgo de limitaciones del modelo, pasando por errores de
 reproducibilidad identificados y corregidos de forma transparente.
+
+
+## LAB03 — Ensambles, reducción dimensional y Green AI (Ejercicio 02)
+
+Notebook: `notebooks/02_ensambles_green_ai.ipynb`
+
+Reutiliza el mismo dataset (ILPD), target (`Selector`) y partición
+(test_size=0.2, random_state=42, stratify=y) del Ejercicio 01. Métrica
+principal: F1-macro. Clase prioritaria: 1 (enfermedad hepática).
+
+### Catálogo evaluado
+6 configuraciones: `logistic`, `svm_c1`, `svm_c10`, `rf_100`, `rf_300`, `boost`
+(HistGradientBoosting), cada una entrenada 3 veces para reportar la mediana
+del tiempo de ajuste.
+
+### Resultados principales
+
+| Modelo | F1-macro | Fit (mediana) | Predicción | Tamaño |
+|---|---|---|---|---|
+| svm_c10 | 0.5633 | 0.128 s | 21.85 ms | 35.93 KB |
+| rf_300 | 0.5477 | 1.256 s | 165.96 ms | 2375.06 KB |
+| logistic | 0.5282 | 0.090 s | 30.87 ms | 4.29 KB |
+| rf_100 | 0.5127 | 0.470 s | 101.45 ms | 791.62 KB |
+| boost | 0.5085 | 0.195 s | 14.31 ms | 160.53 KB |
+| svm_c1 | 0.4061 | 0.151 s | 28.72 ms | 37.27 KB |
+
+*Nota: ninguno usa `class_weight="balanced"` (no forma parte de este
+catálogo), por lo que ningún modelo alcanza el 0.6429 del Ejercicio 01.*
+
+### PCA
+`PCA(n_components=.95)` sobre el bloque numérico retiene 6 de 9 componentes.
+F1-macro con PCA: 0.5611 vs sin PCA: 0.5633 (diferencia despreciable de
+-0.0022).
+
+### t-SNE
+Dos mapas con semillas 42 y 7 (`reports/figures/tsne_two_seeds.png`): la
+estructura global de clusters se mantiene entre semillas, pero las clases
+aparecen fuertemente mezcladas en ambos mapas, sin separación visual clara.
+
+### Frontera de Pareto y decisión
+`svm_c10` y `logistic` quedan en la frontera de Pareto (`reports/figures/pareto.png`,
+`reports/green_ai_results.csv`). Se seleccionó **logistic**: pierde 0.0351 de
+F1-macro (-6.2%) frente a svm_c10, pero pesa 88.1% menos (4.29 KB vs 35.93 KB)
+— el argumento más estable, ya que los tiempos de ajuste/predicción variaron
+entre corridas del mismo notebook (medición contextual, no benchmark
+estandarizado).
+
+### Entorno registrado
+Python 3.13.7, Windows-11-10.0.26200-SP0, AMD64, scikit-learn 1.9.1.
+
+### Pruebas
+`tests/test_green.py` valida `pareto_flags` (implementación vectorizada en
+`src/inf8239_u01/green.py`). Suite completa: `pytest -v` → 9 passed.
